@@ -1,0 +1,37 @@
+{
+  "name": "user",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/multer": "^2.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.995.0",
+    "@aws-sdk/s3-request-presigner": "^3.995.0",
+    "@prisma/adapter-pg": "^7.4.1",
+    "@prisma/client": "^7.4.1",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "db": "workspace:*",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
+    "path": "^0.12.7",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6"
+  }
+}

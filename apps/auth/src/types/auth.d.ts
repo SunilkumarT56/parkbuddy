@@ -1,0 +1,1 @@
+export type Role = ["DRIVER" , "OWNER"] | ["OWNER"] | ["DRIVER"]

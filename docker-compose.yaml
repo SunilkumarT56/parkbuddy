@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: parkbuddy-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: parkbuddy
+      POSTGRES_PASSWORD: parkbuddy
+      POSTGRES_DB: parkbuddy
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: parkbuddy-redis
+    restart: always
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
