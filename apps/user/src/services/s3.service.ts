@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand , DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuid } from "uuid";
 import dotenv from "dotenv";
 dotenv.config();
@@ -26,4 +26,16 @@ export const uploadToS3 = async (
   await s3.send(command);
 
   return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+};
+
+export const deleteFromS3 = async (fileUrl: string) => {
+  const url = new URL(fileUrl);
+  const key = decodeURIComponent(url.pathname.substring(1)); // remove leading "/"
+
+  await s3.send(
+    new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: key,
+    })
+  );
 };

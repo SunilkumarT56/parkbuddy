@@ -26,7 +26,6 @@ export const userVerifyOtp = asyncHandler(
     const { mobileNumber, otp, role } = req.body;
     console.log(req.body);
 
-
     const storedOtp = await redis.get(`otp:${mobileNumber}`);
 
     if (!storedOtp) {
@@ -56,7 +55,7 @@ export const userVerifyOtp = asyncHandler(
     }
     console.log(user);
 
-    const token = generateToken(user.id, user.roles);
+    const token = generateToken(user.id, user.roles, user.currentRole!);
     res.cookie("parkbuddy_token", token, {
       httpOnly: true,
       secure: false, // must be false in HTTP

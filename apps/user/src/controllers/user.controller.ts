@@ -15,6 +15,7 @@ export const getMe = async (req: AuthRequest, res: Response) => {
         roles: true,
         isVerified: true,
         createdAt: true,
+        currentRole: true,
       },
     });
 
@@ -63,6 +64,17 @@ export const becomeOwner = async (req: AuthRequest, res: Response) => {
         },
       },
     });
+    if (user.currentRole !== "OWNER") {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { currentRole: "OWNER" },
+      });
+    } else {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { currentRole: "DRIVER" },
+      });
+    }
 
     const token = generateToken({
       userId: updatedUser.id,

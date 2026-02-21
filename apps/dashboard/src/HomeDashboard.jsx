@@ -591,12 +591,218 @@ const AddSpotView = ({ newSpot, setNewSpot, handleSubmitSpot, validationWarning,
   );
 };
 
+const EditSpotView = ({ spot, onClose }) => {
+  const [editData, setEditData] = useState({
+    pricePerHour: spot.pricePerHour || '',
+    totalSlots: spot.totalSlots || spot.availableSlots || '',
+    description: spot.description || '',
+    isActive: spot.isActive !== false // mock active state defaults to true
+  });
+  const [updateLoading, setUpdateLoading] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setUpdateLoading(true);
+      const payload = {
+        title: spot.title || spot.name,
+        description: editData.description,
+        address: spot.address || '',
+        city: spot.city || '',
+        state: spot.state || '',
+        pincode: spot.pincode || '',
+        latitude: spot.latitude || '28.6139',
+        longitude: spot.longitude || '77.2090',
+        pricePerHour: Number(editData.pricePerHour),
+        totalSlots: Number(editData.totalSlots),
+        isActive: editData.isActive
+      };
+
+      const res = await fetch(`http://10.199.124.131:3008/api/spaces/${spot.id || spot._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        onClose(); // Triggers UI close, user could reload to fetch fresh spots
+      } else {
+        alert(data.message || 'Failed to update the listing.');
+      }
+    } catch (err) {
+      console.error('Update error:', err);
+      alert('Network error while updating. Please check your connection.');
+    } finally {
+      setUpdateLoading(false);
+      setUpdateLoading(false);
+    }
+  };
+
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if(!window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      setDeleteLoading(true);
+      const res = await fetch(`http://10.199.124.131:3008/api/spaces/${spot.id || spot._id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success || res.ok) {
+        onClose(); // Triggers UI close, user could reload to fetch fresh spots
+      } else {
+        alert(data.message || 'Failed to delete the listing.');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Network error while deleting. Please check your connection.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const displayImage = spot.images && spot.images.length > 0
+    ? spot.images[0].imageUrl
+    : addSpotBg;
+
+  return (
+    <div className="relative min-h-screen animate-in slide-in-from-right-4 duration-300 pb-20 bg-slate-50 max-w-xl mx-auto overflow-y-auto">
+      {/* Hero Header exactly like Create Listing */}
+      <div className="relative h-[240px] w-full overflow-hidden bg-[#10B981]">
+        
+        {/* Back Button */}
+        <div className="absolute top-4 left-4 z-[100]">
+          <button 
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center text-slate-800 bg-white/50 backdrop-blur-md rounded-full shadow-sm hover:bg-white hover:text-[#10B981] transition-all"
+          >
+            <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path d="M15 19l-7-7 7-7" /></svg>
+          </button>
+        </div>
+
+        {/* Delete Icon (Top Right) */}
+        <div className="absolute top-4 right-4 z-[100]">
+          <button 
+            onClick={handleDelete}
+            disabled={deleteLoading}
+            className={`w-10 h-10 flex items-center justify-center text-rose-500 bg-white/50 backdrop-blur-md rounded-full shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-all border border-rose-100 ${deleteLoading ? 'opacity-50 pointer-events-none' : ''}`}
+          >
+            {deleteLoading ? (
+              <svg className="w-5 h-5 animate-spin text-rose-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            ) : (
+              <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            )}
+          </button>
+        </div>
+
+        <div className="absolute inset-0 z-0 bg-slate-900">
+          <img 
+            src={displayImage} 
+            alt="Spot Header" 
+            className="w-full h-full object-cover"
+          />
+          {/* Subtle dark gradient just at the top for the back button to always be visible, but no white fog */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent"></div>
+        </div>
+
+        {/* Wavy Shape Overlay */}
+        <div className="absolute bottom-[-1px] left-0 right-0 z-10 select-none pointer-events-none">
+          <svg viewBox="0 0 400 60" className="w-full h-auto">
+            <path 
+              fill="#f8fafc" // Matches slate-50 background
+              d="M0,60 L0,30 C50,0 100,50 150,30 C200,10 250,55 300,35 C350,15 400,45 400,30 L400,60 Z"
+            ></path>
+          </svg>
+        </div>
+      </div>
+
+      <div className="relative z-10 px-8 pt-6">
+        <div className="flex flex-col gap-1 mb-8">
+          <h2 className="text-[26px] font-bold text-slate-900 tracking-tight leading-[1.15]">{spot.title}</h2>
+          <p className="text-[13px] font-medium text-slate-500 mt-2 flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>{spot.address || 'Location Details'}</p>
+        </div>
+
+        {/* Active Toggle */}
+        <div className="bg-white rounded-2xl p-5 mb-8 shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer" onClick={() => setEditData({...editData, isActive: !editData.isActive})}>
+          <div className="flex flex-col gap-1">
+            <span className="text-[15px] font-bold text-slate-900">Listing Status</span>
+            <span className="text-[12px] font-medium text-slate-400">{editData.isActive ? 'Currently live for drivers' : 'Hidden from search'}</span>
+          </div>
+          <div className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${editData.isActive ? 'bg-[#10B981]' : 'bg-slate-200'}`}>
+            <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform duration-300 shadow-sm ${editData.isActive ? 'transform translate-x-6' : ''}`}></div>
+          </div>
+        </div>
+
+        {/* Editable Form */}
+        <div className="space-y-6">
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] font-semibold text-slate-600">Spot Description</label>
+            <textarea 
+              rows="3"
+              className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-4 text-[15px] font-medium text-slate-900 outline-none transition-all focus:border-[#10B981] resize-none placeholder:text-slate-300 shadow-sm"
+              value={editData.description}
+              onChange={(e) => setEditData({...editData, description: e.target.value})}
+              placeholder="Any details for the driver?"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-[14px] font-semibold text-slate-600">Price / Hour (₹)</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</span>
+                <input 
+                  type="number" 
+                  className="w-full h-[52px] bg-white border-2 border-slate-200 rounded-xl pl-8 pr-4 text-[16px] font-bold text-slate-900 outline-none transition-all focus:border-[#10B981] shadow-sm"
+                  value={editData.pricePerHour}
+                  onChange={(e) => setEditData({...editData, pricePerHour: e.target.value})}
+                />
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <label className="text-[14px] font-semibold text-slate-600">Total Slots</label>
+              <input 
+                type="number" 
+                className="w-full h-[52px] bg-white border-2 border-slate-200 rounded-xl px-4 text-[16px] font-bold text-slate-900 outline-none transition-all focus:border-[#10B981] shadow-sm"
+                value={editData.totalSlots}
+                onChange={(e) => setEditData({...editData, totalSlots: e.target.value})}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Update Button */}
+        <div className="mt-10">
+          <button 
+            onClick={handleSave}
+            disabled={updateLoading}
+            className={`w-full h-14 bg-[#10B981] text-white rounded-xl text-[16px] font-bold shadow-lg shadow-emerald-200 hover:shadow-emerald-300 hover:scale-[1.01] transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${updateLoading ? 'opacity-70 pointer-events-none' : ''}`}
+          >
+            {updateLoading ? (
+              <svg className="w-5 h-5 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+            )}
+            {updateLoading ? 'Updating...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ProfileView = ({ 
   userData, 
   currentMode, 
   subView, 
   setSubView, 
-  handleSwitchMode, 
+  handleBecomeOwner, 
+  handleSwitchRole, 
   onBack,
   newSpot,
   setNewSpot,
@@ -693,17 +899,26 @@ const ProfileView = ({
           </div>
         </div>
       ) : (
-        <div className="pt-12 pb-6 px-8 flex items-center bg-white border-b border-slate-50 animate-in slide-in-from-left-2 duration-300">
+        <div className="pt-14 pb-6 px-8 flex items-center bg-white border-b border-slate-50 animate-in slide-in-from-left-2 duration-300 shadow-sm relative z-20">
           <button 
             onClick={() => setSubView(null)}
-            className="w-6 h-6 flex items-center justify-center text-slate-800 hover:text-[#10B981] transition-colors -ml-1"
+            className="w-10 h-10 flex items-center justify-center text-slate-800 bg-slate-100/80 rounded-full hover:bg-[#10B981] hover:text-white transition-colors -ml-2"
           >
-            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path d="M15 19l-7-7 7-7" /></svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
+          
+          <h2 className="ml-4 text-2xl font-extrabold text-slate-900 capitalize tracking-tight">
+            {subView === 'add_spot' ? 'Create Listing' : 
+             subView === 'account' ? 'Edit Profile' : 
+             subView === 'driver' ? 'Payment Methods' : 
+             subView === 'support' ? 'Help & Support' : 
+             subView === 'settings' ? 'App Settings' : 
+             subView.replace('_', ' ')}
+          </h2>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-50/50">
         {subView ? (
           <div className="px-2 py-4">
             {renderDetailView()}
@@ -757,9 +972,15 @@ const ProfileView = ({
               onClick={() => setSubView('support')}
             />
             <MenuItem 
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>} 
+              label="Become an Owner"
+              onClick={handleBecomeOwner}
+            />
+
+            <MenuItem 
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>} 
               label={`Switch to ${currentMode === 'DRIVER' ? 'Owner' : 'Driver'}`}
-              onClick={handleSwitchMode}
+              onClick={handleSwitchRole}
               subtitle={`Current: ${currentMode}`}
             />
 
@@ -791,20 +1012,29 @@ const HomeDashboard = ({ onBack }) => {
   const [toast, setToast] = useState(null);
   const [validationWarning, setValidationWarning] = useState(null);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [recentLocations, setRecentLocations] = useState([
+    { id: 1, name: "Home", type: "home", address: "Sector 45, Gurgaon" },
+    { id: 2, name: "Work", type: "work", address: "Cyber City, DLF Phase 2" },
+    { id: 3, name: "Recent", type: "recent", address: "Ambience Mall" }
+  ]);
+  
   const [newSpot, setNewSpot] = useState({
-    type: 'hourly',
     title: '',
     description: '',
     address: '',
     city: '',
     state: '',
     pincode: '',
-    latitude: '',
-    longitude: '',
     pricePerHour: '',
     totalSlots: '',
+    latitude: '28.6139',
+    longitude: '77.2090',
     images: [],
+    type: 'hourly'
   });
+
+  // NEW: State for editing an existing owner spot
+  const [editingSpot, setEditingSpot] = useState(null);
 
   useEffect(() => {
     if (toast) {
@@ -813,29 +1043,52 @@ const HomeDashboard = ({ onBack }) => {
     }
   }, [toast]);
 
-  const handleSwitchMode = async () => {
-    if (currentMode === 'DRIVER') {
-      try {
-        setIsLoading(true);
-        const res = await fetch("http://10.199.124.131:3008/api/user/become-owner", {
-          method: "PATCH",
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (data.success) {
-          setCurrentMode('OWNER');
-          if (data.user) setUserData(data.user);
-          fetchOwnerSpots(); // Fetch spots immediately on switch
-        } else {
-          setToast({ message: data.message || "Failed to switch mode", type: 'error' });
-        }
-      } catch (err) {
-        setToast({ message: "Network error", type: 'error' });
-      } finally {
-        setIsLoading(false);
+  const handleBecomeOwner = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch("http://10.199.124.131:3008/api/user/become-owner", {
+        method: "PATCH",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentMode('OWNER');
+        if (data.user) setUserData(data.user);
+        fetchOwnerSpots(); // Fetch spots immediately on switch
+        setToast({ message: "Successfully became an owner!", type: 'success' });
+      } else {
+        setToast({ message: data.message || "Failed to become owner", type: 'error' });
       }
-    } else {
-      setCurrentMode('DRIVER');
+    } catch (err) {
+      setToast({ message: "Network error", type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSwitchRole = async () => {
+    const targetRole = currentMode === 'DRIVER' ? 'OWNER' : 'DRIVER';
+    try {
+      setIsLoading(true);
+      const res = await fetch("http://10.199.124.131:3008/api/space/switch-role", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ role: targetRole }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentMode(targetRole);
+        if (targetRole === 'OWNER') fetchOwnerSpots();
+      } else {
+        setToast({ message: data.message || "Failed to switch role", type: 'error' });
+      }
+    } catch (err) {
+      setToast({ message: "Network error", type: 'error' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -935,6 +1188,9 @@ const HomeDashboard = ({ onBack }) => {
         const data = await response.json();
         if (data.success) {
           setUserData(data.user);
+          if (data.user && data.user.currentRole) {
+            setCurrentMode(data.user.currentRole);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch user:', err);
@@ -1009,7 +1265,8 @@ const HomeDashboard = ({ onBack }) => {
           currentMode={currentMode}
           subView={subView}
           setSubView={setSubView}
-          handleSwitchMode={handleSwitchMode}
+          handleBecomeOwner={handleBecomeOwner}
+          handleSwitchRole={handleSwitchRole}
           onBack={onBack}
           newSpot={newSpot}
           setNewSpot={setNewSpot}
@@ -1137,22 +1394,32 @@ const HomeDashboard = ({ onBack }) => {
 
             {/* Owner Dashboard Cards Section */}
             {currentMode === 'OWNER' && (
-              <div className="mt-4 pt-4 pb-6 w-full">
+              <div className="mt-4 pt-4 pb-6 w-full flex flex-col min-h-[60vh]">
                 <h3 className="text-[18px] font-bold text-slate-900 mb-6 px-6 tracking-tight">My parking spots</h3>
                 
-                {/* Horizontally scrollable container for owner spots */}
-                <div className="flex overflow-x-auto no-scrollbar gap-5 px-6 pb-8 snap-x snap-mandatory">
-                  
-                  {ownerSpots.length === 0 ? (
-                    <div className="text-sm text-slate-500 w-full text-center py-10">No spots posted yet. Complete a listing to see it here!</div>
-                  ) : (
-                    ownerSpots.map((spot, index) => {
+                {ownerSpots.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center flex-1 w-full px-6 pb-20 mt-[-40px]">
+                    <div className="text-center max-w-[280px]">
+                      <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      <h3 className="text-[20px] font-bold text-slate-800 tracking-tight mb-2">No spots posted yet</h3>
+                      <p className="text-[15px] text-slate-500 font-medium leading-snug">Complete a listing to start earning from your empty space!</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex overflow-x-auto no-scrollbar gap-5 px-6 pb-8 snap-x snap-mandatory">
+                    {ownerSpots.map((spot, index) => {
                       const displayImage = spot.images && spot.images.length > 0 
                         ? spot.images[0].imageUrl 
                         : "https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?auto=format&fit=crop&q=80&w=800";
                       
                       return (
-                        <div key={spot.id || index} className="shrink-0 w-[280px] snap-center">
+                        <div 
+                          key={spot.id || index} 
+                          className="shrink-0 w-[280px] snap-center"
+                          onClick={() => setEditingSpot(spot)}
+                        >
                           {/* Custom Owner Card (Yellow) scaled down slightly */}
                           <div className="relative w-full rounded-[32px] p-[8px] bg-[#FDE047] shadow-[0_15px_30px_-5px_rgba(253,224,71,0.3)] overflow-hidden flex flex-col group cursor-pointer transition-transform hover:scale-[1.01]">
                             {/* Image Section */}
@@ -1190,12 +1457,11 @@ const HomeDashboard = ({ onBack }) => {
                           </div>
                         </div>
                       );
-                    })
-                  )}
-
-                  {/* Spacer for horizontal scroll padding end */}
-                  <div className="shrink-0 w-8"></div>
-                </div>
+                    })}
+                    {/* Spacer for horizontal scroll padding end */}
+                    <div className="shrink-0 w-8"></div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1241,6 +1507,13 @@ const HomeDashboard = ({ onBack }) => {
             </div>
           )}
         </>
+      )}
+
+      {/* Edit Spot Full Page Overlay */}
+      {editingSpot && (
+        <div className="fixed inset-0 z-[120] bg-white overflow-y-auto">
+          <EditSpotView spot={editingSpot} onClose={() => setEditingSpot(null)} />
+        </div>
       )}
 
       {/* Super Compact Bottom Nav */}

@@ -6,6 +6,7 @@ dotenv.config();
 export interface JwtPayload {
   userId: string;
   roles: string[];
+  currentRole?: string;
 }
 
 export const generateToken = (payload: JwtPayload) => {

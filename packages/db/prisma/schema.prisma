@@ -17,6 +17,8 @@ model User {
   id         String  @id @default(uuid())
   phone      String  @unique
   roles      Role[]
+  currentRole Role?  @default(DRIVER)
+  
   isVerified Boolean @default(false)
 
   spots    ParkingSpace[] @relation("OwnerSpots")
